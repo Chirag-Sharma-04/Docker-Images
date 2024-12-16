@@ -1,0 +1,58 @@
+FROM ros:humble-ros-core
+
+
+# Example of installing programs
+RUN apt-get update \
+    && apt-get install -y \
+    nano \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# Example of copying a file
+#COPY config/ /site_config/
+
+
+# Create a non-root user
+ARG USERNAME=ros-humble
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+
+RUN groupadd --gid $USER_GID $USERNAME \
+  && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
+  && mkdir /home/$USERNAME/.config && chown $USER_UID:$USER_GID /home/$USERNAME/.config
+
+
+# Set up sudo
+RUN apt-get update \
+  && apt-get install -y sudo \
+  && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME\
+  && chmod 0440 /etc/sudoers.d/$USERNAME \
+  && rm -rf /var/lib/apt/lists/*
+
+
+COPY ip.py /ip.py
+
+RUN apt update
+# RUN apt install ros-humble-ros2-control -y
+# RUN apt install ros-humble-ros2-controllers -y
+# RUN apt install ros-humble-twist-mux -y
+# RUN apt install ros-humble-joint-state-publisher -y
+
+RUN sudo apt install -y i2c-tools
+RUN sudo apt install -y net-tools
+RUN apt install python3-pip -y
+RUN pip3 install smbus2
+RUN pip3 install RPLCD
+# RUN python3 ip.py
+
+
+# Copy the entrypoint and bashrc scripts so we have 
+# our container's environment set up correctly
+
+# COPY bashrc /home/${USERNAME}/.bashrc
+
+
+# Set up entrypoint and default command
+# ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
+CMD ["bash"]
